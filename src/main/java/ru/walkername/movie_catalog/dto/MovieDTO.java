@@ -8,15 +8,15 @@ public class MovieDTO {
 
     private String description;
 
-    private double averageRating;
-
-    public double getAverageRating() {
-        return averageRating;
-    }
-
-    public void setAverageRating(double averageRating) {
-        this.averageRating = averageRating;
-    }
+//    private double averageRating;
+//
+//    public double getAverageRating() {
+//        return averageRating;
+//    }
+//
+//    public void setAverageRating(double averageRating) {
+//        this.averageRating = averageRating;
+//    }
 
     public String getTitle() {
         return title;

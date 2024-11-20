@@ -9,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import ru.walkername.movie_catalog.dto.MovieDTO;
+import ru.walkername.movie_catalog.dto.MovieDetails;
 import ru.walkername.movie_catalog.models.Movie;
 import ru.walkername.movie_catalog.services.MoviesService;
 import ru.walkername.movie_catalog.util.MovieErrorResponse;
@@ -56,9 +57,7 @@ public class MoviesController {
     }
 
     @GetMapping()
-    public List<Movie> index(
-
-    ) {
+    public List<Movie> index() {
         return moviesService.getAllMovies();
     }
 
@@ -67,6 +66,13 @@ public class MoviesController {
             @PathVariable("id") int id
     ) {
         return moviesService.findOne(id);
+    }
+
+    @GetMapping("/user/{id}")
+    public List<MovieDetails> getMoviesByUserId(
+            @PathVariable("id") int id
+    ) {
+        return moviesService.getMoviesByUser(id);
     }
 
     @ExceptionHandler
