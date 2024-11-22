@@ -40,6 +40,29 @@ public class MoviesService {
 
     public Movie findOne(int id) {
         Optional<Movie> movie = moviesRepository.findById(id);
+
+        RestTemplate restTemplate = new RestTemplate();
+        String url = RATING_SERVICE_API + "/ratings/movie/" + id;
+
+        // TODO: use endpoint to get ready average rating
+        // i think computation of average rating with the help of sql
+        // will be better
+        RatingsResponse ratingsResponse = restTemplate.getForObject(url, RatingsResponse.class);
+        List<Rating> ratings = Objects.requireNonNull(ratingsResponse).getRatings();
+        double averageRating = 0.0;
+        if (ratings != null) {
+            for (Rating rating : ratings) {
+                averageRating += rating.getRating();
+            }
+            if (!ratings.isEmpty()) {
+                averageRating /= ratings.size();
+            }
+        }
+
+        if (movie.isPresent()) {
+            movie.get().setAverageRating(averageRating);
+        }
+
         return movie.orElse(null);
     }
 
