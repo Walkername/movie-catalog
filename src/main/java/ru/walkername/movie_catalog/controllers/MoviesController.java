@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.walkername.movie_catalog.dto.MovieDTO;
 import ru.walkername.movie_catalog.dto.MovieDetails;
 import ru.walkername.movie_catalog.models.Movie;
+import ru.walkername.movie_catalog.services.KafkaProducerService;
 import ru.walkername.movie_catalog.services.MoviesService;
 import ru.walkername.movie_catalog.util.MovieErrorResponse;
 import ru.walkername.movie_catalog.util.MovieNotCreatedException;
@@ -23,10 +24,12 @@ import java.util.List;
 public class MoviesController {
 
     private final MoviesService moviesService;
+    private final KafkaProducerService kafkaProducerService;
 
     @Autowired
-    public MoviesController(MoviesService moviesService) {
+    public MoviesController(MoviesService moviesService, KafkaProducerService kafkaProducerService) {
         this.moviesService = moviesService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @PostMapping("/add")
@@ -73,6 +76,15 @@ public class MoviesController {
             @PathVariable("id") int id
     ) {
         return moviesService.getMoviesByUser(id);
+    }
+
+    @PostMapping("/rate")
+    public ResponseEntity<HttpStatus> rateMovie(
+            @RequestBody @Valid String rating,
+            BindingResult bindingResult
+    ) {
+        kafkaProducerService.sendMessage(rating);
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @ExceptionHandler
