@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.walkername.movie_catalog.dto.MovieDTO;
 import ru.walkername.movie_catalog.dto.MovieDetails;
 import ru.walkername.movie_catalog.models.Movie;
-import ru.walkername.movie_catalog.services.KafkaProducerService;
 import ru.walkername.movie_catalog.services.MoviesService;
 import ru.walkername.movie_catalog.util.MovieErrorResponse;
 import ru.walkername.movie_catalog.util.MovieNotCreatedException;
@@ -24,12 +23,10 @@ import java.util.List;
 public class MoviesController {
 
     private final MoviesService moviesService;
-    private final KafkaProducerService kafkaProducerService;
 
     @Autowired
-    public MoviesController(MoviesService moviesService, KafkaProducerService kafkaProducerService) {
+    public MoviesController(MoviesService moviesService) {
         this.moviesService = moviesService;
-        this.kafkaProducerService = kafkaProducerService;
     }
 
     @PostMapping("/add")
@@ -37,25 +34,8 @@ public class MoviesController {
             @RequestBody @Valid MovieDTO movieDTO,
             BindingResult bindingResult
     ) {
-        Movie movie = convertToMovie(movieDTO);
-
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorMsg = new StringBuilder();
-
-            List<FieldError> errors = bindingResult.getFieldErrors();
-
-            for (FieldError error : errors) {
-                errorMsg.append(error.getField())
-                        .append(" - ")
-                        .append(error.getDefaultMessage())
-                        .append(";");
-            }
-
-            throw new MovieNotCreatedException(errorMsg.toString());
-        }
-
+        Movie movie = validateMovie(movieDTO, bindingResult);
         moviesService.save(movie);
-
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -78,13 +58,42 @@ public class MoviesController {
         return moviesService.getMoviesByUser(id);
     }
 
-    @PostMapping("/rate")
-    public ResponseEntity<HttpStatus> rateMovie(
-            @RequestBody @Valid String rating,
+    @PatchMapping("/edit/{id}")
+    public ResponseEntity<HttpStatus> update(
+            @PathVariable("id") int id,
+            @RequestBody @Valid MovieDTO movieDTO,
             BindingResult bindingResult
     ) {
-        kafkaProducerService.sendMessage(rating);
+        Movie movie = validateMovie(movieDTO, bindingResult);
+        moviesService.update(id, movie);
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<HttpStatus> delete(
+            @PathVariable("id") int id
+    ) {
+        moviesService.delete(id);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    private Movie validateMovie(MovieDTO movieDTO, BindingResult bindingResult) {
+        Movie movie = convertToMovie(movieDTO);
+
+        if (bindingResult.hasErrors()) {
+            StringBuilder errorMsg = new StringBuilder();
+            List<FieldError> errors = bindingResult.getFieldErrors();
+            for (FieldError error : errors) {
+                errorMsg.append(error.getField())
+                        .append(" - ")
+                        .append(error.getDefaultMessage())
+                        .append(";");
+            }
+
+            throw new MovieNotCreatedException(errorMsg.toString());
+        }
+
+        return movie;
     }
 
     @ExceptionHandler
