@@ -23,10 +23,12 @@ import java.util.List;
 public class MoviesController {
 
     private final MoviesService moviesService;
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public MoviesController(MoviesService moviesService) {
+    public MoviesController(MoviesService moviesService, ModelMapper modelMapper) {
         this.moviesService = moviesService;
+        this.modelMapper = modelMapper;
     }
 
     @PostMapping("/add")
@@ -77,6 +79,16 @@ public class MoviesController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+    @ExceptionHandler
+    private ResponseEntity<MovieErrorResponse> handleException(MovieNotCreatedException ex) {
+        MovieErrorResponse response = new MovieErrorResponse(
+                ex.getMessage(),
+                System.currentTimeMillis()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     private Movie validateMovie(MovieDTO movieDTO, BindingResult bindingResult) {
         Movie movie = convertToMovie(movieDTO);
 
@@ -96,18 +108,7 @@ public class MoviesController {
         return movie;
     }
 
-    @ExceptionHandler
-    private ResponseEntity<MovieErrorResponse> handleException(MovieNotCreatedException ex) {
-        MovieErrorResponse response = new MovieErrorResponse(
-                ex.getMessage(),
-                System.currentTimeMillis()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
     private MovieDTO convertToMovieDTO(Movie movie) {
-        ModelMapper modelMapper = new ModelMapper();
         if (movie == null) {
             return null;
         }
@@ -115,7 +116,6 @@ public class MoviesController {
     }
 
     private Movie convertToMovie(MovieDTO movieDTO) {
-        ModelMapper modelMapper = new ModelMapper();
         return modelMapper.map(movieDTO, Movie.class);
     }
 
