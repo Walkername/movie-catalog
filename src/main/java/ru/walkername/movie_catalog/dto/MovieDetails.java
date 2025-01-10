@@ -9,7 +9,7 @@ public class MovieDetails extends Movie {
     }
 
     public MovieDetails(Movie movie, int userId, double rating) {
-        super(movie.getTitle(), movie.getReleaseYear(), movie.getDescription(), movie.getAverageRating());
+        super(movie.getTitle(), movie.getReleaseYear(), movie.getDescription(), movie.getAverageRating(), movie.getScores());
         this.userId = userId;
         this.rating = rating;
     }

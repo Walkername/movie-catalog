@@ -2,6 +2,8 @@ package ru.walkername.movie_catalog.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -43,8 +45,43 @@ public class MoviesService {
         return movie.orElse(null);
     }
 
+    @Transactional
+    public void update(int id, Movie updatedMovie) {
+        updatedMovie.setId(id);
+        moviesRepository.save(updatedMovie);
+    }
+
+    @Transactional
+    public void delete(int id) {
+        moviesRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void updateAverageRating(int id, double newRating, boolean isUpdate, double oldRating) {
+        Optional<Movie> movie = moviesRepository.findById(id);
+        movie.ifPresent(value -> {
+            int scores = value.getScores();
+            double averageRating = value.getAverageRating();
+            double newAverageRating;
+
+            if (!isUpdate) {
+                newAverageRating = (averageRating * scores + newRating) / (scores + 1);
+                value.setScores(scores + 1);
+            } else {
+                newAverageRating = (averageRating * scores - oldRating + newRating) / scores;
+            }
+
+            value.setAverageRating(newAverageRating);
+        });
+    }
+
     public List<Movie> getAllMovies() {
         return moviesRepository.findAll();
+    }
+
+    public List<Movie> getAllMoviesWithPagination(int page, int moviesPerPage, boolean down) {
+        Sort sort = down ? Sort.by("averageRating").descending() : Sort.by("averageRating").ascending();
+        return moviesRepository.findAll(PageRequest.of(page, moviesPerPage, sort)).getContent();
     }
 
     public List<MovieDetails> getMoviesByUser(int id) {
@@ -76,21 +113,6 @@ public class MoviesService {
         }
 
         return movies;
-    }
-
-    @Transactional
-    public void update(int id, Movie updatedMovie) {
-        updatedMovie.setId(id);
-        Optional<Movie> movie = moviesRepository.findById(id);
-        movie.ifPresent(value -> {
-            updatedMovie.setAverageRating(value.getAverageRating());
-            moviesRepository.save(updatedMovie);
-        });
-    }
-
-    @Transactional
-    public void delete(int id) {
-        moviesRepository.deleteById(id);
     }
 
 }

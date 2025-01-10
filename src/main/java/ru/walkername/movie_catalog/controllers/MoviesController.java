@@ -10,10 +10,12 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import ru.walkername.movie_catalog.dto.MovieDTO;
 import ru.walkername.movie_catalog.dto.MovieDetails;
+import ru.walkername.movie_catalog.dto.NewRatingDTO;
 import ru.walkername.movie_catalog.models.Movie;
 import ru.walkername.movie_catalog.services.MoviesService;
 import ru.walkername.movie_catalog.util.MovieErrorResponse;
 import ru.walkername.movie_catalog.util.MovieNotCreatedException;
+import ru.walkername.movie_catalog.util.MovieWrongAverageRatingException;
 
 import java.util.List;
 
@@ -42,8 +44,12 @@ public class MoviesController {
     }
 
     @GetMapping()
-    public List<Movie> index() {
-        return moviesService.getAllMovies();
+    public List<Movie> index(
+            @RequestParam(value = "page", required = true) Integer page,
+            @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+            @RequestParam(value = "down", required = false, defaultValue = "true") boolean down
+    ) {
+        return moviesService.getAllMoviesWithPagination(page, limit, down);
     }
 
     @GetMapping("/{id}")
@@ -66,8 +72,36 @@ public class MoviesController {
             @RequestBody @Valid MovieDTO movieDTO,
             BindingResult bindingResult
     ) {
-        Movie movie = validateMovie(movieDTO, bindingResult);
-        moviesService.update(id, movie);
+        validateMovie(movieDTO, bindingResult);
+        Movie movie = moviesService.findOne(id);
+        if (movie != null) {
+            modelMapper.map(movieDTO, movie);
+            moviesService.save(movie);
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PatchMapping("/update-avg-rating/{id}")
+    public ResponseEntity<HttpStatus> updateAvgRating(
+            @PathVariable("id") int id,
+            @RequestBody @Valid NewRatingDTO ratingDTO,
+            BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            StringBuilder errorMsg = new StringBuilder();
+            List<FieldError> errors = bindingResult.getFieldErrors();
+            for (FieldError error : errors) {
+                errorMsg.append(error.getField())
+                        .append(" - ")
+                        .append(error.getDefaultMessage())
+                        .append(";");
+            }
+
+            throw new MovieWrongAverageRatingException(errorMsg.toString());
+        }
+
+        moviesService.updateAverageRating(id, ratingDTO.getRating(), ratingDTO.isUpdate(), ratingDTO.getOldRating());
+
         return ResponseEntity.ok(HttpStatus.OK);
     }
 

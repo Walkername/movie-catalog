@@ -30,15 +30,19 @@ public class Movie {
     @Column(name = "average_rating")
     private double averageRating;
 
+    @Column(name = "scores")
+    private int scores;
+
     public Movie() {
 
     }
 
-    public Movie(String title, int releaseYear, String description, double averageRating) {
+    public Movie(String title, int releaseYear, String description, double averageRating, int scores) {
         this.title = title;
         this.releaseYear = releaseYear;
         this.description = description;
         this.averageRating = averageRating;
+        this.scores = scores;
     }
 
     public int getId() {
@@ -79,5 +83,25 @@ public class Movie {
 
     public void setAverageRating(double averageRating) {
         this.averageRating = averageRating;
+    }
+
+    public int getScores() {
+        return scores;
+    }
+
+    public void setScores(int scores) {
+        this.scores = scores;
+    }
+
+    @Override
+    public String toString() {
+        return "Movie{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", releaseYear=" + releaseYear +
+                ", description='" + description + '\'' +
+                ", averageRating=" + averageRating +
+                ", scores=" + scores +
+                '}';
     }
 }
