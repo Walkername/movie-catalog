@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import ru.walkername.movie_catalog.dto.MovieDetails;
+import ru.walkername.movie_catalog.dto.NewRatingDTO;
 import ru.walkername.movie_catalog.dto.RatingsResponse;
 import ru.walkername.movie_catalog.models.Movie;
 import ru.walkername.movie_catalog.models.Rating;
@@ -15,7 +16,6 @@ import ru.walkername.movie_catalog.repositories.MoviesRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -26,13 +26,16 @@ public class MoviesService {
 
     private final String RATING_SERVICE_API;
 
+    private final RestTemplate restTemplate;
+
     @Autowired
     public MoviesService(
             MoviesRepository moviesRepository,
-            @Value("${rating.service.url}") String RATING_SERVICE_API
-    ) {
+            @Value("${rating.service.url}") String RATING_SERVICE_API,
+            RestTemplate restTemplate) {
         this.moviesRepository = moviesRepository;
         this.RATING_SERVICE_API = RATING_SERVICE_API;
+        this.restTemplate = restTemplate;
     }
 
     @Transactional
@@ -57,9 +60,13 @@ public class MoviesService {
     }
 
     @Transactional
-    public void updateAverageRating(int id, double newRating, boolean isUpdate, double oldRating) {
+    public void updateAverageRating(int id, NewRatingDTO ratingDTO) {
         Optional<Movie> movie = moviesRepository.findById(id);
         movie.ifPresent(value -> {
+            double newRating = ratingDTO.getRating();
+            double oldRating = ratingDTO.getOldRating();
+            boolean isUpdate = ratingDTO.isUpdate();
+
             int scores = value.getScores();
             double averageRating = value.getAverageRating();
             double newAverageRating;
@@ -84,39 +91,43 @@ public class MoviesService {
     }
 
     public List<Movie> getAllMoviesWithPagination(int page, int moviesPerPage, boolean down) {
-        Sort sort = down ? Sort.by("averageRating").descending() : Sort.by("averageRating").ascending();
+        Sort sort = down
+                ? Sort.by("averageRating").descending()
+                : Sort.by("averageRating").ascending();
         return moviesRepository.findAll(PageRequest.of(page, moviesPerPage, sort)).getContent();
     }
 
     public List<MovieDetails> getMoviesByUser(int id) {
-        RestTemplate restTemplate = new RestTemplate();
         String url = RATING_SERVICE_API + "/ratings/user/" + id;
 
+        // Getting Rating list by user_id
         RatingsResponse ratingsResponse = restTemplate.getForObject(url, RatingsResponse.class);
-        List<Rating> ratings = Objects.requireNonNull(ratingsResponse).getRatings();
+        if (ratingsResponse == null) {
+            return new ArrayList<>();
+        }
+        List<Rating> ratings = ratingsResponse.getRatings();
 
+        // Building list with movieIds from Rating list
         List<Integer> movieIds = new ArrayList<>();
-        if (ratings != null) {
-            for (Rating rating : ratings) {
-                movieIds.add(rating.getMovieId());
-            }
+        for (Rating rating : ratings) {
+            movieIds.add(rating.getMovieId());
         }
 
-        List<MovieDetails> movies = new ArrayList<>();
-        List<Movie> mov = moviesRepository.findAllById(movieIds);
+        // Getting Movie list by movieIds list
+        List<Movie> ratedMovies = moviesRepository.findAllById(movieIds);
+
+        List<MovieDetails> movieDetailsList = new ArrayList<>();
         // TODO: improve algorithm, because this will be very slow with big amount of data
-        if (ratings != null) {
-            for (Rating rating : ratings) {
-                for (Movie movie : mov) {
-                    if (rating.getMovieId() == movie.getId()) {
-                        MovieDetails movieDetails = new MovieDetails(movie, rating.getUserId(), rating.getRating());
-                        movies.add(movieDetails);
-                    }
+        for (Rating rating : ratings) {
+            for (Movie movie : ratedMovies) {
+                if (rating.getMovieId() == movie.getId()) {
+                    MovieDetails movieDetails = new MovieDetails(movie, rating.getUserId(), rating.getRating());
+                    movieDetailsList.add(movieDetails);
                 }
             }
         }
 
-        return movies;
+        return movieDetailsList;
     }
 
 }

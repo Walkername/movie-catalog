@@ -14,8 +14,7 @@ import ru.walkername.movie_catalog.dto.NewRatingDTO;
 import ru.walkername.movie_catalog.models.Movie;
 import ru.walkername.movie_catalog.services.MoviesService;
 import ru.walkername.movie_catalog.util.MovieErrorResponse;
-import ru.walkername.movie_catalog.util.MovieNotCreatedException;
-import ru.walkername.movie_catalog.util.MovieWrongAverageRatingException;
+import ru.walkername.movie_catalog.util.MovieWrongValidationException;
 
 import java.util.List;
 
@@ -38,14 +37,15 @@ public class MoviesController {
             @RequestBody @Valid MovieDTO movieDTO,
             BindingResult bindingResult
     ) {
-        Movie movie = validateMovie(movieDTO, bindingResult);
+        validateMovie(bindingResult);
+        Movie movie = convertToMovie(movieDTO);
         moviesService.save(movie);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @GetMapping()
     public List<Movie> index(
-            @RequestParam(value = "page", required = true) Integer page,
+            @RequestParam(value = "page") Integer page,
             @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
             @RequestParam(value = "down", required = false, defaultValue = "true") boolean down
     ) {
@@ -72,7 +72,7 @@ public class MoviesController {
             @RequestBody @Valid MovieDTO movieDTO,
             BindingResult bindingResult
     ) {
-        validateMovie(movieDTO, bindingResult);
+        validateMovie(bindingResult);
         Movie movie = moviesService.findOne(id);
         if (movie != null) {
             modelMapper.map(movieDTO, movie);
@@ -87,21 +87,8 @@ public class MoviesController {
             @RequestBody @Valid NewRatingDTO ratingDTO,
             BindingResult bindingResult
     ) {
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorMsg = new StringBuilder();
-            List<FieldError> errors = bindingResult.getFieldErrors();
-            for (FieldError error : errors) {
-                errorMsg.append(error.getField())
-                        .append(" - ")
-                        .append(error.getDefaultMessage())
-                        .append(";");
-            }
-
-            throw new MovieWrongAverageRatingException(errorMsg.toString());
-        }
-
-        moviesService.updateAverageRating(id, ratingDTO.getRating(), ratingDTO.isUpdate(), ratingDTO.getOldRating());
-
+        validateMovie(bindingResult);
+        moviesService.updateAverageRating(id, ratingDTO);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -119,7 +106,7 @@ public class MoviesController {
     }
 
     @ExceptionHandler
-    private ResponseEntity<MovieErrorResponse> handleException(MovieNotCreatedException ex) {
+    private ResponseEntity<MovieErrorResponse> handleException(MovieWrongValidationException ex) {
         MovieErrorResponse response = new MovieErrorResponse(
                 ex.getMessage(),
                 System.currentTimeMillis()
@@ -128,9 +115,7 @@ public class MoviesController {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    private Movie validateMovie(MovieDTO movieDTO, BindingResult bindingResult) {
-        Movie movie = convertToMovie(movieDTO);
-
+    private void validateMovie(BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             StringBuilder errorMsg = new StringBuilder();
             List<FieldError> errors = bindingResult.getFieldErrors();
@@ -141,10 +126,8 @@ public class MoviesController {
                         .append(";");
             }
 
-            throw new MovieNotCreatedException(errorMsg.toString());
+            throw new MovieWrongValidationException(errorMsg.toString());
         }
-
-        return movie;
     }
 
     private MovieDTO convertToMovieDTO(Movie movie) {
