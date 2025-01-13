@@ -75,6 +75,10 @@ public class MoviesService {
         });
     }
 
+    public long getMoviesNumber() {
+        return moviesRepository.count();
+    }
+
     public List<Movie> getAllMovies() {
         return moviesRepository.findAll();
     }

@@ -113,6 +113,11 @@ public class MoviesController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+    @GetMapping("/count")
+    public long getMoviesNumber() {
+        return moviesService.getMoviesNumber();
+    }
+
     @ExceptionHandler
     private ResponseEntity<MovieErrorResponse> handleException(MovieNotCreatedException ex) {
         MovieErrorResponse response = new MovieErrorResponse(
