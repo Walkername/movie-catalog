@@ -59,6 +59,15 @@ public class MoviesService {
         moviesRepository.deleteById(id);
     }
 
+    /**
+     * Method to update field of average rating of specific movie
+     * @param id indicates the movie that will be updated
+     * @param ratingDTO new rating to update average rating
+     *                  <br><b>Structure:</b>
+     *                  <br>rating - indicates new rating
+     *                  <br>oldRating - indicates old rating
+     *                  <br>update - indicates whether this is a new rating or a replacement for the old one
+     */
     @Transactional
     public void updateAverageRating(int id, NewRatingDTO ratingDTO) {
         Optional<Movie> movie = moviesRepository.findById(id);
@@ -86,10 +95,23 @@ public class MoviesService {
         return moviesRepository.count();
     }
 
+    /**
+     * Method to get all movies from DB
+     * @return list of movies
+     */
     public List<Movie> getAllMovies() {
         return moviesRepository.findAll();
     }
 
+    /**
+     * Method to get all movies from DB with pagination
+     * Method is need to do lists of movies on the site
+     * @param page number of page
+     * @param moviesPerPage number of movies that will be in the list
+     *                      (all movies are split by this number, you give only part by page number)
+     * @param down default 'false' ->
+     * @return list of movies
+     */
     public List<Movie> getAllMoviesWithPagination(int page, int moviesPerPage, boolean down) {
         Sort sort = down
                 ? Sort.by("averageRating").descending()
@@ -97,6 +119,12 @@ public class MoviesService {
         return moviesRepository.findAll(PageRequest.of(page, moviesPerPage, sort)).getContent();
     }
 
+    /**
+     * Method to get movies from DB, which was rated by specific user
+     *
+     * @param id indicates the user ID whose rated movies you want to get
+     * @return list of movies with details of rating
+     */
     public List<MovieDetails> getMoviesByUser(int id) {
         String url = RATING_SERVICE_API + "/ratings/user/" + id;
 
@@ -116,8 +144,9 @@ public class MoviesService {
         // Getting Movie list by movieIds list
         List<Movie> ratedMovies = moviesRepository.findAllById(movieIds);
 
+        // Building list with movie details: title, release year, rating from user, etc.
         List<MovieDetails> movieDetailsList = new ArrayList<>();
-        // TODO: improve algorithm, because this will be very slow with big amount of data
+        // TODO: maybe improve algorithm, because this will be very slow with big amount of data
         for (Rating rating : ratings) {
             for (Movie movie : ratedMovies) {
                 if (rating.getMovieId() == movie.getId()) {
