@@ -109,7 +109,7 @@ public class MoviesService {
      * @param page number of page
      * @param moviesPerPage number of movies that will be in the list
      *                      (all movies are split by this number, you give only part by page number)
-     * @param down default 'false' ->
+     * @param down default 'true' -> descending rating order; 'false' -> ascending.
      * @return list of movies
      */
     public List<Movie> getAllMoviesWithPagination(int page, int moviesPerPage, boolean down) {
@@ -150,7 +150,7 @@ public class MoviesService {
         for (Rating rating : ratings) {
             for (Movie movie : ratedMovies) {
                 if (rating.getMovieId() == movie.getId()) {
-                    MovieDetails movieDetails = new MovieDetails(movie, rating.getUserId(), rating.getRating());
+                    MovieDetails movieDetails = new MovieDetails(movie, rating);
                     movieDetailsList.add(movieDetails);
                 }
             }
