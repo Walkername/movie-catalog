@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/movies/delete/{id}", "/movies/add", "/movies/edit/{id}").hasAuthority("ADMIN")
                         .requestMatchers(
-                                "/movies", "/movies/{id}", "/movies/update-avg-rating/{id}"
+                                "/movies", "/movies/{id}", "/movies/user/{id}", "/movies/update-avg-rating/{id}"
                         ).permitAll()
                         .anyRequest().hasAnyAuthority("USER", "ADMIN")
                 )
