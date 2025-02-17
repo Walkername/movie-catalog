@@ -3,6 +3,8 @@ package ru.walkername.movie_catalog.dto;
 import ru.walkername.movie_catalog.models.Movie;
 import ru.walkername.movie_catalog.models.Rating;
 
+import java.util.Date;
+
 public class MovieDetails {
 
     private int userId;
@@ -19,6 +21,8 @@ public class MovieDetails {
 
     private int scores;
 
+    private Date date;
+
     public MovieDetails() {
 
     }
@@ -31,6 +35,7 @@ public class MovieDetails {
         this.releaseYear = movie.getReleaseYear();
         this.averageRating = movie.getAverageRating();
         this.scores = movie.getScores();
+        this.date = rating.getDate();
     }
 
     public int getUserId() {
@@ -87,5 +92,13 @@ public class MovieDetails {
 
     public void setScores(int scores) {
         this.scores = scores;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public Date getDate() {
+        return date;
     }
 }

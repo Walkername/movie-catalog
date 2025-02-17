@@ -61,9 +61,12 @@ public class MoviesController {
 
     @GetMapping("/user/{id}")
     public List<MovieDetails> getMoviesByUserId(
-            @PathVariable("id") int id
+            @PathVariable("id") int id,
+            @RequestParam(value = "page") Integer page,
+            @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+            @RequestParam(value = "down", required = false, defaultValue = "true") boolean byDate
     ) {
-        return moviesService.getMoviesByUser(id);
+        return moviesService.getMoviesByUser(id, page, limit, byDate);
     }
 
     @PatchMapping("/edit/{id}")

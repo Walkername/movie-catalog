@@ -1,5 +1,7 @@
 package ru.walkername.movie_catalog.models;
 
+import java.util.Date;
+
 public class Rating {
 
     private int ratingId;
@@ -9,6 +11,8 @@ public class Rating {
     private int movieId;
 
     private double rating;
+
+    private Date date;
 
     public Rating() {
 
@@ -50,5 +54,13 @@ public class Rating {
 
     public void setRating(double rating) {
         this.rating = rating;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
     }
 }

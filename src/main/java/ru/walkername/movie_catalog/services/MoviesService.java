@@ -125,8 +125,8 @@ public class MoviesService {
      * @param id indicates the user ID whose rated movies you want to get
      * @return list of movies with details of rating
      */
-    public List<MovieDetails> getMoviesByUser(int id) {
-        String url = RATING_SERVICE_API + "/ratings/user/" + id;
+    public List<MovieDetails> getMoviesByUser(int id, int page, int moviesPerPage, boolean byDate) {
+        String url = RATING_SERVICE_API + "/ratings/user/" + id + "?page=" + page + "&limit=" + moviesPerPage + "&byDate=" + byDate;
 
         // Getting Rating list by user_id
         RatingsResponse ratingsResponse = restTemplate.getForObject(url, RatingsResponse.class);
