@@ -108,6 +108,13 @@ public class MoviesController {
         return moviesService.getMoviesNumber();
     }
 
+    @GetMapping("/search")
+    public List<Movie> search(
+        @RequestParam(value = "query") String query
+    ) {
+        return moviesService.findByTitleStartingWith(query);
+    }
+
     @ExceptionHandler
     private ResponseEntity<MovieErrorResponse> handleException(MovieWrongValidationException ex) {
         MovieErrorResponse response = new MovieErrorResponse(

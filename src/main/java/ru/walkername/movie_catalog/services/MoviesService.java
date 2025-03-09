@@ -15,6 +15,7 @@ import ru.walkername.movie_catalog.models.Rating;
 import ru.walkername.movie_catalog.repositories.MoviesRepository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -157,6 +158,13 @@ public class MoviesService {
         }
 
         return movieDetailsList;
+    }
+
+    public List<Movie> findByTitleStartingWith(String title) {
+        if (title.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return moviesRepository.findByTitleStartingWith(title);
     }
 
 }
